@@ -10,6 +10,7 @@
         padding: 1rem;
         max-width: 800px;
         margin: auto;
+        overflow-x: hidden;
       }
       input, button, select {
         width: 100%;
@@ -23,19 +24,22 @@
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 1rem;
+        user-select: none;
       }
       th, td {
         border: 1px solid #ccc;
         padding: 0.5rem;
         text-align: center;
+        touch-action: manipulation;
       }
       td.hour-cell {
         cursor: pointer;
         background-color: #f0f0f0;
         transition: background-color 0.2s;
+        min-width: 60px;
       }
       td.selected-current {
-        background-color: #22c55e !important; /* green for current user selection */
+        background-color: #22c55e !important;
         color: white !important;
       }
       td[data-count="1"]:not(.selected-current) { background-color: #dbeafe; }
@@ -44,12 +48,18 @@
       td[data-count="4"]:not(.selected-current) { background-color: #60a5fa; color: white; }
       td[data-count="5"]:not(.selected-current) { background-color: #3b82f6; color: white; }
       .message {
-        margin-bottom: 1rem;
-        padding: 0.5rem;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #22c55e;
+        color: white;
+        padding: 0.75rem 1.25rem;
         border-radius: 6px;
-        background-color: #ecfdf5;
-        color: #065f46;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 999;
         display: none;
+        font-weight: bold;
       }
     </style>
   </head>
@@ -77,6 +87,7 @@
       const HOURS = Array.from({ length: 24 }, (_, i) => i);
       const schedule = {};
       let currentUserSchedule = [];
+      let isMouseDown = false;
 
       const table = document.getElementById("time-table");
       const hourSelect = document.getElementById("hour-select");
@@ -107,13 +118,22 @@
             td.classList.add("selected-current");
           }
           td.title = participants.join(", ");
-          td.onclick = () => toggleHour(hour);
+
+          td.addEventListener('mousedown', () => {
+            isMouseDown = true;
+            toggleHour(hour);
+          });
+          td.addEventListener('mouseover', () => {
+            if (isMouseDown) toggleHour(hour);
+          });
 
           tr.appendChild(th);
           tr.appendChild(td);
           table.appendChild(tr);
         });
       }
+
+      document.body.addEventListener("mouseup", () => isMouseDown = false);
 
       function renderHourSelect() {
         hourSelect.innerHTML = '<option value="">시간을 선택하세요</option>';
