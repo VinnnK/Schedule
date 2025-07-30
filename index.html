@@ -92,7 +92,6 @@
       const HOURS = Array.from({ length: 24 }, (_, i) => i);
       const schedule = {};
       let currentUserSchedule = [];
-      let isMouseDown = false;
 
       const table = document.getElementById("time-table");
       const hourSelect = document.getElementById("hour-select");
@@ -125,31 +124,13 @@
           }
           td.title = participants.join(", ");
 
-          td.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            isMouseDown = true;
-            toggleHour(hour);
-          });
-
-          td.addEventListener('mouseenter', (e) => {
-            if (isMouseDown) {
-              e.preventDefault();
-              toggleHour(hour);
-            }
-          });
-
-          td.addEventListener('mouseup', () => {
-            isMouseDown = false;
-          });
+          td.addEventListener('click', () => toggleHour(hour));
 
           tr.appendChild(th);
           tr.appendChild(td);
           table.appendChild(tr);
         });
       }
-
-      document.body.addEventListener("mouseup", () => isMouseDown = false);
-      document.body.addEventListener("mouseleave", () => isMouseDown = false);
 
       function renderHourSelect() {
         hourSelect.innerHTML = '<option value="">시간을 선택하세요</option>';
