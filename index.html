@@ -8,10 +8,10 @@
       body {
         font-family: sans-serif;
         padding: 1rem;
-        max-width: 600px;
+        max-width: 800px;
         margin: auto;
       }
-      input, button {
+      input, button, select {
         width: 100%;
         padding: 0.5rem;
         margin-bottom: 1rem;
@@ -19,80 +19,107 @@
         border: 1px solid #ccc;
         font-size: 1rem;
       }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        gap: 0.5rem;
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
       }
-      .hour {
+      th, td {
+        border: 1px solid #ccc;
         padding: 0.5rem;
         text-align: center;
+      }
+      td.hour-cell {
         cursor: pointer;
-        border-radius: 6px;
-        border: 1px solid #ccc;
         background-color: #f0f0f0;
       }
-      .selected {
+      td.selected {
         background-color: #2563eb;
         color: white;
       }
-      .participant-box {
-        background-color: #e0f2fe;
-      }
-      .participant-box[data-count="2"] {
-        background-color: #90cdf4;
-      }
-      .participant-box[data-count="3"] {
-        background-color: #60a5fa;
-      }
-      .participant-box[data-count="4"] {
-        background-color: #3b82f6;
-        color: white;
-      }
-      .participant-box[data-count="5"] {
-        background-color: #1d4ed8;
-        color: white;
-      }
+      td[data-count="1"] { background-color: #dbeafe; }
+      td[data-count="2"] { background-color: #bfdbfe; }
+      td[data-count="3"] { background-color: #93c5fd; }
+      td[data-count="4"] { background-color: #60a5fa; color: white; }
+      td[data-count="5"] { background-color: #3b82f6; color: white; }
     </style>
   </head>
   <body>
     <h1>모임 시간표</h1>
     <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
-    <div class="grid" id="time-grid"></div>
+    <table>
+      <thead>
+        <tr><th>시간</th><th>참여 인원</th></tr>
+      </thead>
+      <tbody id="time-table"></tbody>
+    </table>
     <button onclick="saveSchedule()">시간 저장하기</button>
-    <h2>참여자 목록</h2>
-    <ul id="participant-list"></ul>
+    <button onclick="deleteSchedule()">입력 삭제하기</button>
+
+    <h2>참여자 확인</h2>
+    <select id="hour-select">
+      <option value="">시간을 선택하세요</option>
+    </select>
+    <ul id="hour-participants"></ul>
 
     <script>
       const HOURS = Array.from({ length: 24 }, (_, i) => i);
       const schedule = {};
       let currentUserSchedule = [];
 
-      const grid = document.getElementById("time-grid");
-      const list = document.getElementById("participant-list");
+      const table = document.getElementById("time-table");
+      const hourSelect = document.getElementById("hour-select");
+      const participantList = document.getElementById("hour-participants");
 
-      function renderGrid() {
-        grid.innerHTML = "";
+      function renderTable() {
+        table.innerHTML = "";
         HOURS.forEach((hour) => {
+          const tr = document.createElement("tr");
+
+          const th = document.createElement("th");
+          th.textContent = `${hour}:00`;
+
+          const td = document.createElement("td");
           const participants = getHourParticipants(hour);
-          const box = document.createElement("div");
-          box.className = "hour participant-box";
-          if (currentUserSchedule.includes(hour)) box.classList.add("selected");
-          box.dataset.count = participants.length;
-          box.innerHTML = `${hour}:00<br>(${participants.length})`;
-          box.title = participants.join(", ");
-          box.onclick = () => toggleHour(hour);
-          grid.appendChild(box);
+          td.className = "hour-cell";
+          td.dataset.count = participants.length;
+          td.innerText = participants.length;
+          if (currentUserSchedule.includes(hour)) td.classList.add("selected");
+          td.title = participants.join(", ");
+          td.onclick = () => toggleHour(hour);
+
+          tr.appendChild(th);
+          tr.appendChild(td);
+          table.appendChild(tr);
+        });
+      }
+
+      function renderHourSelect() {
+        hourSelect.innerHTML = '<option value="">시간을 선택하세요</option>';
+        HOURS.forEach(hour => {
+          const option = document.createElement("option");
+          option.value = hour;
+          option.textContent = `${hour}:00`;
+          hourSelect.appendChild(option);
+        });
+      }
+
+      function renderParticipants(hour) {
+        participantList.innerHTML = "";
+        getHourParticipants(hour).forEach(name => {
+          const li = document.createElement("li");
+          li.textContent = name;
+          participantList.appendChild(li);
         });
       }
 
       function toggleHour(hour) {
         if (currentUserSchedule.includes(hour)) {
-          currentUserSchedule = currentUserSchedule.filter((h) => h !== hour);
+          currentUserSchedule = currentUserSchedule.filter(h => h !== hour);
         } else {
           currentUserSchedule.push(hour);
         }
-        renderGrid();
+        renderTable();
       }
 
       function getHourParticipants(hour) {
@@ -103,27 +130,34 @@
 
       function saveSchedule() {
         const name = document.getElementById("nickname").value.trim();
-        if (!name) {
-          alert("닉네임을 입력하세요");
+        if (!name) return alert("닉네임을 입력하세요.");
+        if (!schedule[name] && Object.keys(schedule).includes(name)) {
+          alert("이미 등록된 닉네임입니다. 수정하려면 삭제 후 다시 입력하세요.");
           return;
         }
         schedule[name] = currentUserSchedule;
         currentUserSchedule = [];
         document.getElementById("nickname").value = "";
-        renderGrid();
-        renderList();
+        renderTable();
       }
 
-      function renderList() {
-        list.innerHTML = "";
-        Object.entries(schedule).forEach(([name, hours]) => {
-          const item = document.createElement("li");
-          item.textContent = `${name}: ${hours.sort((a, b) => a - b).join(", ")}시`;
-          list.appendChild(item);
-        });
+      function deleteSchedule() {
+        const name = document.getElementById("nickname").value.trim();
+        if (!name || !schedule[name]) return alert("해당 닉네임의 데이터가 없습니다.");
+        delete schedule[name];
+        currentUserSchedule = [];
+        document.getElementById("nickname").value = "";
+        renderTable();
       }
 
-      renderGrid();
+      hourSelect.addEventListener("change", (e) => {
+        const val = e.target.value;
+        if (val !== "") renderParticipants(Number(val));
+        else participantList.innerHTML = "";
+      });
+
+      renderTable();
+      renderHourSelect();
     </script>
   </body>
 </html>
