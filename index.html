@@ -52,7 +52,6 @@
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
-        background-color: #22c55e;
         color: white;
         padding: 0.75rem 1.25rem;
         border-radius: 6px;
@@ -60,6 +59,12 @@
         z-index: 999;
         display: none;
         font-weight: bold;
+      }
+      .message.success {
+        background-color: #22c55e;
+      }
+      .message.error {
+        background-color: #ef4444;
       }
     </style>
   </head>
@@ -94,8 +99,9 @@
       const participantList = document.getElementById("hour-participants");
       const messageBox = document.getElementById("message");
 
-      function showMessage(text) {
+      function showMessage(text, type = 'success') {
         messageBox.innerText = text;
+        messageBox.className = `message ${type}`;
         messageBox.style.display = 'block';
         setTimeout(() => messageBox.style.display = 'none', 2000);
       }
@@ -119,12 +125,17 @@
           }
           td.title = participants.join(", ");
 
-          td.addEventListener('mousedown', () => {
+          td.addEventListener('mousedown', (e) => {
+            e.preventDefault();
             isMouseDown = true;
             toggleHour(hour);
           });
-          td.addEventListener('mouseover', () => {
-            if (isMouseDown) toggleHour(hour);
+
+          td.addEventListener('mouseenter', (e) => {
+            if (isMouseDown) {
+              e.preventDefault();
+              toggleHour(hour);
+            }
           });
 
           tr.appendChild(th);
@@ -178,15 +189,18 @@
 
       function saveSchedule() {
         const name = document.getElementById("nickname").value.trim();
-        if (!name) return alert("닉네임을 입력하세요.");
+        if (!name) {
+          showMessage("닉네임을 입력하세요.", "error");
+          return;
+        }
 
         if (schedule[name]) {
-          alert("이미 등록된 닉네임입니다. 삭제 후 다시 입력해주세요.");
+          showMessage("이미 등록된 닉네임입니다. 삭제 후 다시 입력해주세요.", "error");
           return;
         }
 
         if (currentUserSchedule.length === 0) {
-          alert("시간을 선택해주세요.");
+          showMessage("시간을 선택해주세요.", "error");
           return;
         }
 
@@ -199,7 +213,10 @@
 
       function deleteSchedule() {
         const name = document.getElementById("nickname").value.trim();
-        if (!name || !schedule[name]) return alert("해당 닉네임의 데이터가 없습니다.");
+        if (!name || !schedule[name]) {
+          showMessage("해당 닉네임의 데이터가 없습니다.", "error");
+          return;
+        }
         delete schedule[name];
         currentUserSchedule = [];
         document.getElementById("nickname").value = "";
