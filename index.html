@@ -138,6 +138,10 @@
             }
           });
 
+          td.addEventListener('mouseup', () => {
+            isMouseDown = false;
+          });
+
           tr.appendChild(th);
           tr.appendChild(td);
           table.appendChild(tr);
@@ -145,6 +149,7 @@
       }
 
       document.body.addEventListener("mouseup", () => isMouseDown = false);
+      document.body.addEventListener("mouseleave", () => isMouseDown = false);
 
       function renderHourSelect() {
         hourSelect.innerHTML = '<option value="">시간을 선택하세요</option>';
