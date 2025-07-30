@@ -32,21 +32,31 @@
       td.hour-cell {
         cursor: pointer;
         background-color: #f0f0f0;
+        transition: background-color 0.2s;
       }
-      td.selected {
-        background-color: #2563eb;
-        color: white;
+      td.selected-current {
+        background-color: #22c55e !important; /* green for current user selection */
+        color: white !important;
       }
-      td[data-count="1"] { background-color: #dbeafe; }
-      td[data-count="2"] { background-color: #bfdbfe; }
-      td[data-count="3"] { background-color: #93c5fd; }
-      td[data-count="4"] { background-color: #60a5fa; color: white; }
-      td[data-count="5"] { background-color: #3b82f6; color: white; }
+      td[data-count="1"]:not(.selected-current) { background-color: #dbeafe; }
+      td[data-count="2"]:not(.selected-current) { background-color: #bfdbfe; }
+      td[data-count="3"]:not(.selected-current) { background-color: #93c5fd; }
+      td[data-count="4"]:not(.selected-current) { background-color: #60a5fa; color: white; }
+      td[data-count="5"]:not(.selected-current) { background-color: #3b82f6; color: white; }
+      .message {
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        border-radius: 6px;
+        background-color: #ecfdf5;
+        color: #065f46;
+        display: none;
+      }
     </style>
   </head>
   <body>
     <h1>모임 시간표</h1>
     <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
+    <div class="message" id="message"></div>
     <table>
       <thead>
         <tr><th>시간</th><th>참여 인원</th></tr>
@@ -55,6 +65,7 @@
     </table>
     <button onclick="saveSchedule()">시간 저장하기</button>
     <button onclick="deleteSchedule()">입력 삭제하기</button>
+    <button onclick="deleteAllSchedules()">모든 입력 삭제하기</button>
 
     <h2>참여자 확인</h2>
     <select id="hour-select">
@@ -70,6 +81,13 @@
       const table = document.getElementById("time-table");
       const hourSelect = document.getElementById("hour-select");
       const participantList = document.getElementById("hour-participants");
+      const messageBox = document.getElementById("message");
+
+      function showMessage(text) {
+        messageBox.innerText = text;
+        messageBox.style.display = 'block';
+        setTimeout(() => messageBox.style.display = 'none', 2000);
+      }
 
       function renderTable() {
         table.innerHTML = "";
@@ -84,7 +102,10 @@
           td.className = "hour-cell";
           td.dataset.count = participants.length;
           td.innerText = participants.length;
-          if (currentUserSchedule.includes(hour)) td.classList.add("selected");
+
+          if (currentUserSchedule.includes(hour)) {
+            td.classList.add("selected-current");
+          }
           td.title = participants.join(", ");
           td.onclick = () => toggleHour(hour);
 
@@ -106,11 +127,18 @@
 
       function renderParticipants(hour) {
         participantList.innerHTML = "";
-        getHourParticipants(hour).forEach(name => {
+        const names = getHourParticipants(hour);
+        if (names.length === 0) {
           const li = document.createElement("li");
-          li.textContent = name;
+          li.textContent = "참여자가 없습니다.";
           participantList.appendChild(li);
-        });
+        } else {
+          names.forEach(name => {
+            const li = document.createElement("li");
+            li.textContent = name;
+            participantList.appendChild(li);
+          });
+        }
       }
 
       function toggleHour(hour) {
@@ -131,14 +159,22 @@
       function saveSchedule() {
         const name = document.getElementById("nickname").value.trim();
         if (!name) return alert("닉네임을 입력하세요.");
-        if (!schedule[name] && Object.keys(schedule).includes(name)) {
-          alert("이미 등록된 닉네임입니다. 수정하려면 삭제 후 다시 입력하세요.");
+
+        if (schedule[name]) {
+          alert("이미 등록된 닉네임입니다. 삭제 후 다시 입력해주세요.");
           return;
         }
+
+        if (currentUserSchedule.length === 0) {
+          alert("시간을 선택해주세요.");
+          return;
+        }
+
         schedule[name] = currentUserSchedule;
         currentUserSchedule = [];
         document.getElementById("nickname").value = "";
         renderTable();
+        showMessage("일정이 저장되었습니다.");
       }
 
       function deleteSchedule() {
@@ -148,6 +184,16 @@
         currentUserSchedule = [];
         document.getElementById("nickname").value = "";
         renderTable();
+        showMessage("일정이 삭제되었습니다.");
+      }
+
+      function deleteAllSchedules() {
+        if (confirm("모든 입력을 삭제하시겠습니까?")) {
+          Object.keys(schedule).forEach(key => delete schedule[key]);
+          currentUserSchedule = [];
+          renderTable();
+          showMessage("모든 일정이 삭제되었습니다.");
+        }
       }
 
       hourSelect.addEventListener("change", (e) => {
