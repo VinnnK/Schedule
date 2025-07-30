@@ -1,83 +1,129 @@
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모임 시간표</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 1rem;
+        max-width: 600px;
+        margin: auto;
+      }
+      input, button {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+      }
+      .hour {
+        padding: 0.5rem;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background-color: #f0f0f0;
+      }
+      .selected {
+        background-color: #2563eb;
+        color: white;
+      }
+      .participant-box {
+        background-color: #e0f2fe;
+      }
+      .participant-box[data-count="2"] {
+        background-color: #90cdf4;
+      }
+      .participant-box[data-count="3"] {
+        background-color: #60a5fa;
+      }
+      .participant-box[data-count="4"] {
+        background-color: #3b82f6;
+        color: white;
+      }
+      .participant-box[data-count="5"] {
+        background-color: #1d4ed8;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>모임 시간표</h1>
+    <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
+    <div class="grid" id="time-grid"></div>
+    <button onclick="saveSchedule()">시간 저장하기</button>
+    <h2>참여자 목록</h2>
+    <ul id="participant-list"></ul>
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+    <script>
+      const HOURS = Array.from({ length: 24 }, (_, i) => i);
+      const schedule = {};
+      let currentUserSchedule = [];
 
-export default function Scheduler() {
-  const [nickname, setNickname] = useState("");
-  const [schedule, setSchedule] = useState({});
-  const [currentUserSchedule, setCurrentUserSchedule] = useState([]);
+      const grid = document.getElementById("time-grid");
+      const list = document.getElementById("participant-list");
 
-  const toggleHour = (hour) => {
-    let updated = [...currentUserSchedule];
-    if (updated.includes(hour)) {
-      updated = updated.filter((h) => h !== hour);
-    } else {
-      updated.push(hour);
-    }
-    setCurrentUserSchedule(updated);
-  };
+      function renderGrid() {
+        grid.innerHTML = "";
+        HOURS.forEach((hour) => {
+          const participants = getHourParticipants(hour);
+          const box = document.createElement("div");
+          box.className = "hour participant-box";
+          if (currentUserSchedule.includes(hour)) box.classList.add("selected");
+          box.dataset.count = participants.length;
+          box.innerHTML = `${hour}:00<br>(${participants.length})`;
+          box.title = participants.join(", ");
+          box.onclick = () => toggleHour(hour);
+          grid.appendChild(box);
+        });
+      }
 
-  const saveSchedule = () => {
-    if (!nickname) return alert("닉네임을 입력해주세요.");
-    const updated = { ...schedule };
-    updated[nickname] = currentUserSchedule;
-    setSchedule(updated);
-    setCurrentUserSchedule([]);
-    setNickname("");
-  };
+      function toggleHour(hour) {
+        if (currentUserSchedule.includes(hour)) {
+          currentUserSchedule = currentUserSchedule.filter((h) => h !== hour);
+        } else {
+          currentUserSchedule.push(hour);
+        }
+        renderGrid();
+      }
 
-  const getHourInfo = (hour) => {
-    const participants = Object.entries(schedule)
-      .filter(([_, hours]) => hours.includes(hour))
-      .map(([name]) => name);
-    return participants;
-  };
+      function getHourParticipants(hour) {
+        return Object.entries(schedule)
+          .filter(([_, hours]) => hours.includes(hour))
+          .map(([name]) => name);
+      }
 
-  return (
-    <div className="max-w-2xl mx-auto p-4 space-y-4">
-      <Card>
-        <CardContent className="space-y-2 p-4">
-          <Input
-            placeholder="닉네임"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-          />
-          <div className="grid grid-cols-6 gap-2">
-            {HOURS.map((hour) => {
-              const participants = getHourInfo(hour);
-              const isSelected = currentUserSchedule.includes(hour);
-              return (
-                <div
-                  key={hour}
-                  className={`p-2 text-center cursor-pointer rounded border ${isSelected ? "bg-blue-400 text-white" : participants.length > 0 ? `bg-blue-${100 + participants.length * 100}` : "bg-gray-100"}`}
-                  onClick={() => toggleHour(hour)}
-                  title={participants.join(", ")}
-                >
-                  {hour}:00<br />({participants.length})
-                </div>
-              );
-            })}
-          </div>
-          <Button className="w-full" onClick={saveSchedule}>
-            시간 저장하기
-          </Button>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-4">
-          <h2 className="font-semibold mb-2">참여자 목록</h2>
-          <ul className="space-y-1">
-            {Object.entries(schedule).map(([name, hours]) => (
-              <li key={name} className="text-sm">
-                <strong>{name}</strong>: {hours.sort((a, b) => a - b).join(", ")}시
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+      function saveSchedule() {
+        const name = document.getElementById("nickname").value.trim();
+        if (!name) {
+          alert("닉네임을 입력하세요");
+          return;
+        }
+        schedule[name] = currentUserSchedule;
+        currentUserSchedule = [];
+        document.getElementById("nickname").value = "";
+        renderGrid();
+        renderList();
+      }
+
+      function renderList() {
+        list.innerHTML = "";
+        Object.entries(schedule).forEach(([name, hours]) => {
+          const item = document.createElement("li");
+          item.textContent = `${name}: ${hours.sort((a, b) => a - b).join(", ")}시`;
+          list.appendChild(item);
+        });
+      }
+
+      renderGrid();
+    </script>
+  </body>
+</html>
