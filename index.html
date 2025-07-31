@@ -4,8 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>모임 시간표</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
       body {
         font-family: sans-serif;
@@ -21,6 +19,20 @@
         border-radius: 6px;
         border: 1px solid #ccc;
         font-size: 1rem;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .actions button {
+        width: auto;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
       }
       table {
         width: 100%;
@@ -71,11 +83,15 @@
     </style>
   </head>
   <body>
-    <h1>모임 시간표</h1>
+    <div class="header">
+      <h1>모임 시간표</h1>
+      <div class="actions">
+        <button onclick="selectAllHours()">전체 선택</button>
+        <button onclick="clearAllHours()">전체 취소</button>
+      </div>
+    </div>
     <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
     <div class="message" id="message"></div>
-    <button onclick="selectAllHours()">전체 선택</button>
-    <button onclick="clearAllHours()">전체 취소</button>
     <table>
       <thead>
         <tr><th>시간</th><th>참여 인원</th></tr>
@@ -92,29 +108,7 @@
     </select>
     <ul id="hour-participants"></ul>
 
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyA-U74_QfN7CanKwDOpyM97KYN7Jromiy4",
-    authDomain: "schedule-da078.firebaseapp.com",
-    databaseURL: "https://schedule-da078-default-rtdb.firebaseio.com",
-    projectId: "schedule-da078",
-    storageBucket: "schedule-da078.firebasestorage.app",
-    messagingSenderId: "480800174812",
-    appId: "1:480800174812:web:4b11969665249be810fa19"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-    
     <script>
-  
       const HOURS = [...Array(24).keys()].map(i => (i + 7) % 24);
       const schedule = {};
       let currentUserSchedule = [];
@@ -215,8 +209,6 @@
         }
 
         schedule[name] = currentUserSchedule;
-        db.ref('schedules/' + name).set(currentUserSchedule);
-
         currentUserSchedule = [];
         document.getElementById("nickname").value = "";
         renderTable();
@@ -230,8 +222,6 @@
           return;
         }
         delete schedule[name];
-        db.ref('schedules/' + name).remove();
-
         currentUserSchedule = [];
         document.getElementById("nickname").value = "";
         renderTable();
@@ -241,8 +231,6 @@
       function deleteAllSchedules() {
         if (confirm("모든 입력을 삭제하시겠습니까?")) {
           Object.keys(schedule).forEach(key => delete schedule[key]);
-          db.ref('schedules').remove();
-
           currentUserSchedule = [];
           renderTable();
           showMessage("모든 일정이 삭제되었습니다.");
@@ -259,16 +247,6 @@
         renderTable();
       }
 
-      function loadSchedules() {
-        db.ref('schedules').once('value').then(snapshot => {
-          const data = snapshot.val();
-          if (data) {
-            Object.assign(schedule, data);
-            renderTable();
-          }
-        });
-      }
-
       hourSelect.addEventListener("change", (e) => {
         const val = e.target.value;
         if (val !== "") renderParticipants(Number(val));
@@ -277,7 +255,6 @@
 
       renderTable();
       renderHourSelect();
-      loadSchedules();
     </script>
   </body>
 </html>
