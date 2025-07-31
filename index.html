@@ -115,6 +115,22 @@
     </select>
     <ul id="hour-participants"></ul>
 
+<script>
+  // Firebase 설정 및 초기화
+  const firebaseConfig = {
+    apiKey: "AIzaSyA-U74_QfN7CanKwDOpyM97KYN7Jromiy4",
+    authDomain: "schedule-da078.firebaseapp.com",
+    databaseURL: "https://schedule-da078-default-rtdb.firebaseio.com",
+    projectId: "schedule-da078",
+    storageBucket: "schedule-da078.appspot.com",
+    messagingSenderId: "480800174812",
+    appId: "1:480800174812:web:4b11969665249be810fa19"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
+
     <script>
 
       const firebaseConfig = {
