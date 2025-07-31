@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+ <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
     <title>모임 참여시간</title>
     <style>
       body {
@@ -101,8 +106,8 @@
     <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
     <div class="message" id="message"></div>
     <button onclick="saveSchedule()">시간 저장하기</button>
-    <button onclick="deleteSchedule()">입력 삭제하기</button>
-    <button onclick="deleteAllSchedules()" style="background-color:black; border-color:gray; color:white" >모든 기록 삭제하기</button>
+    <button onclick="deleteSchedule()">해당 닉네임 기록 삭제하기</button>
+    <button onclick="deleteAllSchedules()" style="background-color:black; border-color:gray; color:white" >모든 참여자 기록 삭제하기</button>
     
     <h2>참여자 확인</h2>
     <select id="hour-select">
@@ -110,10 +115,18 @@
     </select>
     <ul id="hour-participants"></ul>
 
-
-
-
     <script>
+
+      const firebaseConfig = {
+  apiKey: "AIzaSyA-U74_QfN7CanKwDOpyM97KYN7Jromiy4",
+  authDomain: "schedule-da078.firebaseapp.com",
+  databaseURL: "https://schedule-da078-default-rtdb.firebaseio.com",
+  projectId: "schedule-da078",
+  storageBucket: "schedule-da078.firebasestorage.app",
+  messagingSenderId: "480800174812",
+  appId: "1:480800174812:web:4b11969665249be810fa19"
+};
+
       const HOURS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
       const schedule = {};
       let currentUserSchedule = [];
@@ -197,48 +210,44 @@
           .map(([name]) => name);
       }
 
-      function saveSchedule() {
-        const name = document.getElementById("nickname").value.trim();
-        if (!name) {
-          showMessage("닉네임을 입력하세요.", "error");
-          return;
-        }
-        if (schedule[name]) {
-          showMessage("이미 등록된 닉네임입니다. 삭제 후 다시 입력해주세요.", "error");
-          return;
-        }
-        if (currentUserSchedule.length === 0) {
-          showMessage("시간을 선택해주세요.", "error");
-          return;
-        }
-        schedule[name] = currentUserSchedule;
-        currentUserSchedule = [];
-        document.getElementById("nickname").value = "";
-        renderTable();
-        showMessage("일정이 저장되었습니다.");
-      }
+async function saveSchedule() {
+  const name = document.getElementById("nickname").value.trim();
+  if (!name) return showMessage("닉네임을 입력하세요.", "error");
+  if (schedule[name]) return showMessage("이미 등록된 닉네임입니다.", "error");
+  if (currentUserSchedule.length === 0) return showMessage("시간을 선택해주세요.", "error");
 
-      function deleteSchedule() {
-        const name = document.getElementById("nickname").value.trim();
-        if (!name || !schedule[name]) {
-          showMessage("해당 닉네임의 데이터가 없습니다.", "error");
-          return;
-        }
-        delete schedule[name];
-        currentUserSchedule = [];
-        document.getElementById("nickname").value = "";
-        renderTable();
-        showMessage("일정이 삭제되었습니다.");
-      }
+  schedule[name] = currentUserSchedule;
+  await db.collection("schedules").doc(name).set({ hours: currentUserSchedule });
+  currentUserSchedule = [];
+  document.getElementById("nickname").value = "";
+  renderTable();
+  showMessage("일정이 저장되었습니다.");
+}
 
-      function deleteAllSchedules() {
-        if (confirm("모든 입력을 삭제하시겠습니까?")) {
-          Object.keys(schedule).forEach(key => delete schedule[key]);
-          currentUserSchedule = [];
-          renderTable();
-          showMessage("모든 일정이 삭제되었습니다.");
-        }
-      }
+ async function deleteSchedule() {
+  const name = document.getElementById("nickname").value.trim();
+  if (!name || !schedule[name]) return showMessage("해당 닉네임의 데이터가 없습니다.", "error");
+
+  delete schedule[name];
+  await db.collection("schedules").doc(name).delete();
+  currentUserSchedule = [];
+  document.getElementById("nickname").value = "";
+  renderTable();
+  showMessage("일정이 삭제되었습니다.");
+}
+
+async function deleteAllSchedules() {
+  if (confirm("모든 입력을 삭제하시겠습니까?")) {
+    const snapshot = await db.collection("schedules").get();
+    const batch = db.batch();
+    snapshot.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    Object.keys(schedule).forEach(k => delete schedule[k]);
+    currentUserSchedule = [];
+    renderTable();
+    showMessage("모든 일정이 삭제되었습니다.");
+  }
+}
 
       function selectAllHours() {
         currentUserSchedule = [...HOURS];
@@ -250,6 +259,14 @@
         renderTable();
       }
 
+async function loadSchedules() {
+  const snapshot = await db.collection("schedules").get();
+  snapshot.forEach(doc => {
+    schedule[doc.id] = doc.data().hours;
+  });
+  renderTable();
+}
+
       hourSelect.addEventListener("change", (e) => {
         const val = e.target.value;
         if (val !== "") renderParticipants(Number(val));
@@ -258,6 +275,8 @@
 
       renderTable();
       renderHourSelect();
+      loadSchedules();
+
     </script>
   </body>
 </html>
