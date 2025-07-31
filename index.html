@@ -288,10 +288,17 @@ async function loadSchedules() {
         if (val !== "") renderParticipants(Number(val));
         else participantList.innerHTML = "";
       });
+	    
+db.ref("schedules").once("value").then(snapshot => {
+  snapshot.forEach(child => {
+    schedule[child.key] = child.val();
+  });
+  renderTable();
+});
 
       renderTable();
       renderHourSelect();
-      loadSchedules();
+//      loadSchedules();
 
     </script>
   </body>
