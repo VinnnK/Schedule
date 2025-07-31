@@ -1,17 +1,16 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <title>모임 시간표</title>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>모임 참여시간</title>
     <style>
       body {
         font-family: sans-serif;
         padding: 1rem;
         max-width: 800px;
         margin: auto;
+        overflow-x: hidden;
       }
       input, button, select {
         width: 100%;
@@ -20,30 +19,25 @@
         border-radius: 6px;
         border: 1px solid #ccc;
         font-size: 1rem;
-      }
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .actions button {
-        width: auto;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
+	box-sizing: border-box; 
       }
       table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 1rem;
+        user-select: none;
       }
       th, td {
         border: 1px solid #ccc;
         padding: 0.5rem;
         text-align: center;
+        touch-action: manipulation;
       }
       td.hour-cell {
         cursor: pointer;
         background-color: #f0f0f0;
+        transition: background-color 0.2s;
+        min-width: 60px;
       }
       td.selected-current {
         background-color: #22c55e !important;
@@ -53,53 +47,96 @@
       td[data-count="2"]:not(.selected-current) { background-color: #bfdbfe; }
       td[data-count="3"]:not(.selected-current) { background-color: #93c5fd; }
       td[data-count="4"]:not(.selected-current) { background-color: #60a5fa; color: white; }
-      td[data-count="5"]:not(.selected-current) { background-color: #3b82f6; color: white; }
+      td[data-count]:not(.selected-current)[data-count]:is([data-count="5"], [data-count="6"], [data-count="7"], [data-count="8"], [data-count="9"], [data-count="10"], [data-count="11"], [data-count="12"], [data-count="13"], [data-count="14"], [data-count="15"], [data-count="16"], [data-count="17"], [data-count="18"], [data-count="19"], [data-count="20"]) { background-color: #3b82f6; color: white; }
+
+      .message {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        padding: 0.75rem 1.25rem;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 999;
+        display: none;
+        font-weight: bold;
+      }
+      .message.success { background-color: #22c55e; }
+      .message.error { background-color: #ef4444; }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .small-buttons {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .small-buttons button {
+        width: auto;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+      }
     </style>
   </head>
   <body>
     <div class="header">
       <h1>모임 시간표</h1>
-      <div class="actions">
+      <div class="small-buttons">
         <button onclick="selectAllHours()">전체 선택</button>
         <button onclick="clearAllHours()">전체 취소</button>
       </div>
     </div>
-    <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
+
     <table>
       <thead>
         <tr><th>시간</th><th>참여 인원</th></tr>
       </thead>
       <tbody id="time-table"></tbody>
     </table>
+
+    <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
+    <div class="message" id="message"></div>
     <button onclick="saveSchedule()">시간 저장하기</button>
-    <button onclick="deleteSchedule()">입력 삭제하기</button>
+    <button onclick="deleteSchedule()">해당 닉네임 기록 삭제하기</button>
+    <button onclick="deleteAllSchedules()" style="background-color:black; border-color:gray; color:white" >모든 참여자 기록 삭제하기</button>
+    
+    <h2>참여자 확인</h2>
+    <select id="hour-select">
+      <option value="">시간을 선택하세요</option>
+    </select>
+    <ul id="hour-participants"></ul>
+
+
+
 
     <script>
-      // 🔹 Firebase 설정 (복사한 내용 붙여넣기)
-      const firebaseConfig = {
-        apiKey: "AIzaSyA-U74_QfN7CanKwDOpyM97KYN7Jromiy4",
-        authDomain: "schedule-da078.firebaseapp.com",
-        projectId: "schedule-da078",
-        storageBucket: "schedule-da078.appspot.com",
-        messagingSenderId: "480800174812",
-        appId: "1:480800174812:web:4b11969665249be810fa19"
-      };
-
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
-
-      const HOURS = [...Array(24).keys()].map(i => (i + 7) % 24);
-      let schedule = {};
+      const HOURS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
+      const schedule = {};
       let currentUserSchedule = [];
 
       const table = document.getElementById("time-table");
+      const hourSelect = document.getElementById("hour-select");
+      const participantList = document.getElementById("hour-participants");
+      const messageBox = document.getElementById("message");
+
+      function showMessage(text, type = 'success') {
+        messageBox.innerText = text;
+        messageBox.className = `message ${type}`;
+        messageBox.style.display = 'block';
+        setTimeout(() => messageBox.style.display = 'none', 2000);
+      }
 
       function renderTable() {
         table.innerHTML = "";
         HOURS.forEach((hour) => {
           const tr = document.createElement("tr");
+
           const th = document.createElement("th");
-          th.textContent = `${hour}:00`;
+          th.textContent = `${hour.toString().padStart(2, '0')}:00`;
 
           const td = document.createElement("td");
           const participants = getHourParticipants(hour);
@@ -111,12 +148,38 @@
             td.classList.add("selected-current");
           }
           td.title = participants.join(", ");
-          td.onclick = () => toggleHour(hour);
+          td.addEventListener('click', () => toggleHour(hour));
 
           tr.appendChild(th);
           tr.appendChild(td);
           table.appendChild(tr);
         });
+      }
+
+      function renderHourSelect() {
+        hourSelect.innerHTML = '<option value="">시간을 선택하세요</option>';
+        HOURS.forEach(hour => {
+          const option = document.createElement("option");
+          option.value = hour;
+          option.textContent = `${hour.toString().padStart(2, '0')}:00`;
+          hourSelect.appendChild(option);
+        });
+      }
+
+      function renderParticipants(hour) {
+        participantList.innerHTML = "";
+        const names = getHourParticipants(hour);
+        if (names.length === 0) {
+          const li = document.createElement("li");
+          li.textContent = "참여자가 없습니다.";
+          participantList.appendChild(li);
+        } else {
+          names.forEach(name => {
+            const li = document.createElement("li");
+            li.textContent = name;
+            participantList.appendChild(li);
+          });
+        }
       }
 
       function toggleHour(hour) {
@@ -136,27 +199,45 @@
 
       function saveSchedule() {
         const name = document.getElementById("nickname").value.trim();
-        if (!name) return alert("닉네임을 입력하세요.");
-        if (currentUserSchedule.length === 0) return alert("시간을 선택하세요.");
-
-        db.collection("schedules").doc(name).set({ hours: currentUserSchedule })
-          .then(() => {
-            alert("저장되었습니다!");
-            currentUserSchedule = [];
-            loadSchedules();
-          });
+        if (!name) {
+          showMessage("닉네임을 입력하세요.", "error");
+          return;
+        }
+        if (schedule[name]) {
+          showMessage("이미 등록된 닉네임입니다. 삭제 후 다시 입력해주세요.", "error");
+          return;
+        }
+        if (currentUserSchedule.length === 0) {
+          showMessage("시간을 선택해주세요.", "error");
+          return;
+        }
+        schedule[name] = currentUserSchedule;
+        currentUserSchedule = [];
+        document.getElementById("nickname").value = "";
+        renderTable();
+        showMessage("일정이 저장되었습니다.");
       }
 
       function deleteSchedule() {
         const name = document.getElementById("nickname").value.trim();
-        if (!name) return alert("닉네임을 입력하세요.");
+        if (!name || !schedule[name]) {
+          showMessage("해당 닉네임의 데이터가 없습니다.", "error");
+          return;
+        }
+        delete schedule[name];
+        currentUserSchedule = [];
+        document.getElementById("nickname").value = "";
+        renderTable();
+        showMessage("일정이 삭제되었습니다.");
+      }
 
-        db.collection("schedules").doc(name).delete()
-          .then(() => {
-            alert("삭제되었습니다!");
-            currentUserSchedule = [];
-            loadSchedules();
-          });
+      function deleteAllSchedules() {
+        if (confirm("모든 입력을 삭제하시겠습니까?")) {
+          Object.keys(schedule).forEach(key => delete schedule[key]);
+          currentUserSchedule = [];
+          renderTable();
+          showMessage("모든 일정이 삭제되었습니다.");
+        }
       }
 
       function selectAllHours() {
@@ -169,17 +250,14 @@
         renderTable();
       }
 
-      function loadSchedules() {
-        db.collection("schedules").get().then(snapshot => {
-          schedule = {};
-          snapshot.forEach(doc => {
-            schedule[doc.id] = doc.data().hours;
-          });
-          renderTable();
-        });
-      }
+      hourSelect.addEventListener("change", (e) => {
+        const val = e.target.value;
+        if (val !== "") renderParticipants(Number(val));
+        else participantList.innerHTML = "";
+      });
 
-      loadSchedules();
+      renderTable();
+      renderHourSelect();
     </script>
   </body>
 </html>
