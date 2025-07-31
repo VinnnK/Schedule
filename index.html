@@ -3,7 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>모임 참여시간</title>
+	  
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyA-U74_QfN7CanKwDOpyM97KYN7Jromiy4",
+    authDomain: "schedule-da078.firebaseapp.com",
+    databaseURL: "https://schedule-da078-default-rtdb.firebaseio.com",
+    projectId: "schedule-da078",
+    storageBucket: "schedule-da078.firebasestorage.app",
+    messagingSenderId: "480800174812",
+    appId: "1:480800174812:web:4b11969665249be810fa19"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+	  
+    <title>참여시간</title>
     <style>
       body {
         font-family: sans-serif;
@@ -84,7 +106,7 @@
   </head>
   <body>
     <div class="header">
-      <h1>모임 시간표</h1>
+      <h1>참여시간</h1>
       <div class="small-buttons">
         <button onclick="selectAllHours()">전체 선택</button>
         <button onclick="clearAllHours()">전체 취소</button>
@@ -98,10 +120,10 @@
       <tbody id="time-table"></tbody>
     </table>
 
-    <input type="text" id="nickname" placeholder="닉네임을 입력하세요" />
+    <input type="text" id="nickname" placeholder="이름을 입력하세요" />
     <div class="message" id="message"></div>
     <button onclick="saveSchedule()">시간 저장하기</button>
-    <button onclick="deleteSchedule()">해당 닉네임 기록 삭제하기</button>
+    <button onclick="deleteSchedule()">해당 이름 기록 삭제하기</button>
     <button onclick="deleteAllSchedules()" style="background-color:black; border-color:gray; color:white" >모든 참여자 기록 삭제하기</button>
     
     <h2>참여자 확인</h2>
@@ -109,9 +131,6 @@
       <option value="">시간을 선택하세요</option>
     </select>
     <ul id="hour-participants"></ul>
-
-
-
 
     <script>
       const HOURS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
