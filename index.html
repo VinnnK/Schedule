@@ -3,8 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     
     <title>참여시간</title>
     <style>
@@ -86,29 +84,8 @@
       }
     </style>
   </head>
-  <body>
 
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyA-U74_QfN7CanKwDOpyM97KYN7Jromiy4",
-    authDomain: "schedule-da078.firebaseapp.com",
-    databaseURL: "https://schedule-da078-default-rtdb.firebaseio.com",
-    projectId: "schedule-da078",
-    storageBucket: "schedule-da078.firebasestorage.app",
-    messagingSenderId: "480800174812",
-    appId: "1:480800174812:web:4b11969665249be810fa19"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-
+<body>
     <div class="header">
       <h1>참여시간</h1>
       <div class="small-buttons">
@@ -346,7 +323,7 @@ function renderAllParticipants() {
     li.textContent = `${name} – ${timeRanges}`;
     container.appendChild(li);
   });
-
+}	
 function renderAllParticipants() {
   const container = document.getElementById("all-participants");
   container.innerHTML = "";
@@ -363,10 +340,9 @@ function renderAllParticipants() {
     container.appendChild(li);
   });
 }
-}
-      renderTable();
-      renderHourSelect();
-renderAllParticipants();
+	renderTable();
+	renderHourSelect();
+	renderAllParticipants();
     </script>
   </body>
 </html>
