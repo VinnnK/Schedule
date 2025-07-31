@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    
     <title>참여시간</title>
     <style>
       body {
@@ -84,6 +87,28 @@
     </style>
   </head>
   <body>
+
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyA-U74_QfN7CanKwDOpyM97KYN7Jromiy4",
+    authDomain: "schedule-da078.firebaseapp.com",
+    databaseURL: "https://schedule-da078-default-rtdb.firebaseio.com",
+    projectId: "schedule-da078",
+    storageBucket: "schedule-da078.firebasestorage.app",
+    messagingSenderId: "480800174812",
+    appId: "1:480800174812:web:4b11969665249be810fa19"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+
     <div class="header">
       <h1>참여시간</h1>
       <div class="small-buttons">
@@ -110,6 +135,9 @@
       <option value="">시간을 선택하세요</option>
     </select>
     <ul id="hour-participants"></ul>
+
+<h2>전체 참여자 목록 <span id="all-participants-count">(0명)</span></h2>
+<ul id="all-participants"></ul>
 
     <script>
       const HOURS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
@@ -214,6 +242,7 @@
         document.getElementById("nickname").value = "";
         renderTable();
         showMessage("일정이 저장되었습니다.");
+renderAllParticipants();
       }
 
       function deleteSchedule() {
@@ -227,6 +256,7 @@
         document.getElementById("nickname").value = "";
         renderTable();
         showMessage("일정이 삭제되었습니다.");
+renderAllParticipants();
       }
 
       function deleteAllSchedules() {
@@ -235,6 +265,7 @@
           currentUserSchedule = [];
           renderTable();
           showMessage("모든 일정이 삭제되었습니다.");
+renderAllParticipants();
         }
       }
 
@@ -254,8 +285,94 @@
         else participantList.innerHTML = "";
       });
 
+function formatHourRanges(hours) {
+  if (hours.length === 0) return "";
+
+  const sorted = [...hours].sort((a, b) => {
+    const shift = h => (h < 7 ? h + 24 : h);  // 7시 기준 정렬
+    return shift(a) - shift(b);
+  });
+
+  const ranges = [];
+  let start = sorted[0];
+  let end = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const expected = (end + 1) % 24;
+    if (sorted[i] === expected) {
+      end = sorted[i];
+    } else {
+      ranges.push([start, end]);
+      start = sorted[i];
+      end = sorted[i];
+    }
+  }
+  ranges.push([start, end]);
+
+return ranges.map(([s, e]) => {
+  // 종료시간은 누른 시간보다 1시간 뒤
+  const end = (e + 1) % 24;
+  // 시작과 종료 시간이 모두 7시인 경우 하루종일로 처리
+  if (s === 7 && end === 7) {
+    return "하루종일";}
+  const startLabel = (s >= 0 && s <= 6) ? `새벽 ${s}시` : `${s}시`;
+  const endLabel = (end >= 0 && end <= 6) ? `새벽 ${end}시` : `${end}시`;
+  return `${startLabel}~${endLabel}`;
+}).join(", ");
+}
+
+function renderAllParticipants() {
+  const container = document.getElementById("all-participants");
+  container.innerHTML = "";
+
+  const names = Object.keys(schedule);
+
+  if (names.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "등록된 참여자가 없습니다.";
+    container.appendChild(li);
+    return;
+  }
+
+  names.forEach(name => {
+    const li = document.createElement("li");
+    const timeRanges = formatHourRanges(schedule[name]);
+    li.textContent = `${name} – ${timeRanges}`;
+    container.appendChild(li);
+  });
+
+function renderAllParticipants() {
+  const container = document.getElementById("all-participants");
+  container.innerHTML = "";
+
+  const names = Object.keys(schedule);
+  if (names.length === 0) {
+    const li = document.createElement("li");
+    li.textContent = "등록된 참여자가 없습니다.";
+    container.appendChild(li);
+
+    // 👇 추가된 코드: 인원 수 0으로 업데이트
+    document.getElementById("participant-count").textContent = `(0명)`;
+    return;
+  }
+
+  names.forEach(name => {
+    const li = document.createElement("li");
+    const timeRanges = formatHourRanges(schedule[name]);
+    li.textContent = `${name} – ${timeRanges}`;
+    container.appendChild(li);
+  });
+
+  // 👇 추가된 코드: 참여자 수 반영
+  document.getElementById("participant-count").textContent = `(${names.length}명)`;
+}
+
+}
+
+
       renderTable();
       renderHourSelect();
+renderAllParticipants();
     </script>
   </body>
 </html>
