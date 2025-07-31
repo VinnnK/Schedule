@@ -323,9 +323,15 @@ return ranges.map(([s, e]) => {
 
 function renderAllParticipants() {
   const container = document.getElementById("all-participants");
+  const countSpan = document.getElementById("all-participants-count");
+
   container.innerHTML = "";
 
   const names = Object.keys(schedule);
+
+  if (countSpan) {
+    countSpan.textContent = `(${names.length}명)`;
+  }
 
   if (names.length === 0) {
     const li = document.createElement("li");
@@ -344,32 +350,20 @@ function renderAllParticipants() {
 function renderAllParticipants() {
   const container = document.getElementById("all-participants");
   container.innerHTML = "";
-
   const names = Object.keys(schedule);
   if (names.length === 0) {
     const li = document.createElement("li");
     li.textContent = "등록된 참여자가 없습니다.";
     container.appendChild(li);
-
-    // 👇 추가된 코드: 인원 수 0으로 업데이트
-    document.getElementById("participant-count").textContent = `(0명)`;
-    return;
   }
-
   names.forEach(name => {
     const li = document.createElement("li");
     const timeRanges = formatHourRanges(schedule[name]);
     li.textContent = `${name} – ${timeRanges}`;
     container.appendChild(li);
   });
-
-  // 👇 추가된 코드: 참여자 수 반영
-  document.getElementById("participant-count").textContent = `(${names.length}명)`;
 }
-
 }
-
-
       renderTable();
       renderHourSelect();
 renderAllParticipants();
