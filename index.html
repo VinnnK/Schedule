@@ -3,30 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-   
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyA-U74_QfN7CanKwDOpyM97KYN7Jromiy4",
-    authDomain: "schedule-da078.firebaseapp.com",
-    databaseURL: "https://schedule-da078-default-rtdb.firebaseio.com",
-    projectId: "schedule-da078",
-    storageBucket: "schedule-da078.firebasestorage.app",
-    messagingSenderId: "480800174812",
-    appId: "1:480800174812:web:4b11969665249be810fa19"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
-	  
     <title>참여시간</title>
     <style>
       body {
@@ -128,7 +104,7 @@
     <button onclick="deleteSchedule()">해당 이름 기록 삭제하기</button>
     <button onclick="deleteAllSchedules()" style="background-color:black; border-color:gray; color:white" >모든 참여자 기록 삭제하기</button>
     
-    <h2>참여자 확인</h2>
+    <h2>시간별 참여자 확인</h2>
     <select id="hour-select">
       <option value="">시간을 선택하세요</option>
     </select>
