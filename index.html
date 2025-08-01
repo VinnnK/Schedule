@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    
+   
     <title>참여시간</title>
     <style>
       body {
@@ -84,8 +84,8 @@
       }
     </style>
   </head>
+  <body>
 
-<body>
     <div class="header">
       <h1>참여시간</h1>
       <div class="small-buttons">
@@ -320,29 +320,13 @@ function renderAllParticipants() {
   names.forEach(name => {
     const li = document.createElement("li");
     const timeRanges = formatHourRanges(schedule[name]);
-    li.textContent = `${name} – ${timeRanges}`;
-    container.appendChild(li);
-  });
-}	
-function renderAllParticipants() {
-  const container = document.getElementById("all-participants");
-  container.innerHTML = "";
-  const names = Object.keys(schedule);
-  if (names.length === 0) {
-    const li = document.createElement("li");
-    li.textContent = "등록된 참여자가 없습니다.";
-    container.appendChild(li);
-  }
-  names.forEach(name => {
-    const li = document.createElement("li");
-    const timeRanges = formatHourRanges(schedule[name]);
-    li.textContent = `${name} – ${timeRanges}`;
+    li.textContent = `${name} - ${timeRanges}`;
     container.appendChild(li);
   });
 }
-	renderTable();
-	renderHourSelect();
-	renderAllParticipants();
+      renderTable();
+      renderHourSelect();
+renderAllParticipants();
     </script>
   </body>
 </html>
